@@ -1,4 +1,4 @@
-# The Illusion of Multi-Agent Advantages
+# The Illusion of Automatically Orchestrated Multi-Agent Advantage
 
 This repository contains (1) the code for generating and evaluating the **Smfrs** benchmark dataset used in our experiments, and (2) the evaluation code for all methods compared in the paper, including automatic MAS frameworks, our expert-designed MAS, and single-agent baselines (CoT & CoT-SC).
 
