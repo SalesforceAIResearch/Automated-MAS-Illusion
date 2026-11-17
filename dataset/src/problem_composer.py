@@ -9,8 +9,6 @@ from typing import Dict, Any, List, Optional
 from config_schema import PipelineConfig, AggregationOp, get_template, DEFAULT_TEMPLATES
 from task_base import BaseTask
 from tasks.stock_task import StockTask
-from tasks.math_task import MathTask
-from tasks.coding_task import CodingTask
 from tqdm import tqdm
 
 
@@ -59,10 +57,6 @@ class ProblemComposer:
 
         if task_type == 'stock':
             return StockTask(config_dict)
-        elif task_type == 'math':
-            return MathTask(config_dict)
-        elif task_type == 'coding':
-            return CodingTask(config_dict)
         else:
             raise ValueError(f"Unknown task type: {task_type}")
 
@@ -374,10 +368,6 @@ class ProblemComposer:
                     template_name = 'stock_compare_multi_reverse_buy'
                 else:
                     template_name = 'stock_compare_multi'
-        elif task_type == 'math':
-            template_name = 'math_single'
-        elif task_type == 'coding':
-            template_name = 'coding_single'
         else:
             # Generic template
             return "{haystack}\n\n{question}"

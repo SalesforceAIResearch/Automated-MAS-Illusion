@@ -165,7 +165,7 @@ class BaseTask(ABC):
         Return the type identifier for this task.
 
         Returns:
-            String identifier (e.g., 'stock', 'math', 'coding')
+            String identifier ('stock' for SMFR)
         """
         pass
 

@@ -35,7 +35,7 @@ class DataSourceConfig:
 @dataclass
 class TaskConfig:
     """Configuration for a single task type."""
-    task_type: str  # 'stock', 'math', 'coding'
+    task_type: str  # 'stock' (SMFR)
 
     # Random seed for reproducibility
     seed: int = 100
@@ -195,59 +195,6 @@ def stock_comparative_target_config(num_investors: int = 2,
     )
 
 
-def math_single_config(**kwargs) -> PipelineConfig:
-    """Configuration for single math problem."""
-    defaults = {
-        'task_type': 'math',
-        'seed': 100,
-        'task_params': {
-            'problem_type': 'arithmetic',  # 'arithmetic', 'algebra', 'word_problem'
-            'difficulty': 'medium',
-            'operations': ['+', '-', '*', '/']
-        }
-    }
-    defaults.update(kwargs)
-
-    return PipelineConfig(
-        task=TaskConfig(**defaults),
-        composition=CompositionConfig(
-            num_instances=1,
-            aggregation_op=AggregationOp.FIRST
-        )
-    )
-
-
-def mixed_task_config(tasks: List[Dict[str, Any]]) -> List[PipelineConfig]:
-    """
-    Configuration for mixing different task types.
-
-    Args:
-        tasks: List of task specifications, each containing task_type and params
-
-    Returns:
-        List of pipeline configs that can be combined
-    """
-    configs = []
-    for task_spec in tasks:
-        task_type = task_spec['task_type']
-        params = task_spec.get('params', {})
-
-        if task_type == 'stock':
-            config = stock_single_investor_config(**params)
-        elif task_type == 'math':
-            config = math_single_config(**params)
-        else:
-            # Generic config
-            config = PipelineConfig(
-                task=TaskConfig(task_type=task_type, **params),
-                composition=CompositionConfig()
-            )
-
-        configs.append(config)
-
-    return configs
-
-
 # Template library
 DEFAULT_TEMPLATES = {
     'stock_single': """Here is some data on the stock prices of a few companies. Use this data to answer the following questions:
@@ -341,20 +288,6 @@ Each investor has completed several transactions and holds shares in one remaini
 
 Each investor has completed several transactions and has already sold shares in one common stock but has not yet bought them. Based on when they would have had to buy these shares to achieve at least {target_description} overall portfolio profit when they sold, who has the {timing_word} possible buy date (the {timing_word} date in their list of valid dates) to reach this target, if all transactions were made at {price_type} prices?
 """,
-
-    'math_single': """Solve the following problem:
-
-{problem}
-
-What is the answer?
-""",
-
-    'coding_single': """Given the following code:
-
-{code}
-
-{question}
-"""
 }
 
 

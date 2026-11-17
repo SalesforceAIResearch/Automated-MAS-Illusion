@@ -173,6 +173,40 @@ class PipelineTests(unittest.IsolatedAsyncioTestCase):
                 await provider.complete([dict(role='user', content='changed')], folder)
 
 
+class EvaluationTests(unittest.TestCase):
+    def test_saved_answer_and_execution_votes_use_full_reference_denominator(self):
+        import contextlib
+        import io
+        from scripts import evaluate
+        from evaluation.common.data import digest
+        references = [dict(problem='Case ' + str(i),
+                           answer=dict(investor_dates={'Alice': [], 'Bob': []},
+                                       answer=['Alice'] if i < 2 else None)) for i in range(3)]
+        predictions = [dict(problem_sha256=digest('Case 0'), output={'answer': ['Bob']},
+                            execution_vote=['Alice']),
+                       dict(problem_sha256=digest('Case 2'), output={'answer': []},
+                            execution_vote=None)]
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            ref, out = root / 'reference.jsonl', root / 'outputs.jsonl'
+            ref.write_text(''.join(json.dumps(r) + '\n' for r in references))
+            out.write_text(''.join(json.dumps(r) + '\n' for r in predictions))
+            for metric in ['answer', 'execution']:
+                capture = io.StringIO()
+                with patch('sys.argv', ['evaluate', '--outputs', str(out), '--reference', str(ref),
+                                        '--metric', metric]), contextlib.redirect_stdout(capture):
+                    evaluate.main()
+                report = json.loads(capture.getvalue())
+                self.assertEqual(report['reference_cases'], 3)
+                self.assertEqual(report['missing_outputs'], 1)
+                self.assertEqual(report['correct'], 1)
+            predictions[0].pop('execution_vote')
+            out.write_text(json.dumps(predictions[0]) + '\n')
+            with patch('sys.argv', ['evaluate', '--outputs', str(out), '--reference', str(ref),
+                                    '--metric', 'execution']), self.assertRaisesRegex(ValueError, 'Execution vote missing'):
+                evaluate.main()
+
+
 class ExecutionTests(unittest.TestCase):
     def test_self_contained_program_and_timeout(self):
         result = execute('def solve():\n    return {"answer": ["Alice"]}')

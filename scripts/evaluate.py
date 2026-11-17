@@ -11,6 +11,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--outputs', type=Path, required=True)
     parser.add_argument('--reference', type=Path)
+    parser.add_argument('--metric', choices=['answer', 'execution'], default='answer',
+                        help='Score model answers or the separate Code-CoT-SC execution vote')
     parser.add_argument('--report', type=Path)
     args = parser.parse_args()
     references = {digest(r['problem']): (n, r) for n, r in dataset(path=args.reference)}
@@ -25,10 +27,16 @@ def main():
             continue
         if key in predictions:
             raise ValueError('Duplicate prediction for ' + key)
-        predictions[key] = row.get('output', row.get('parsed', {}))
+        if args.metric == 'execution':
+            if 'execution_vote' not in row:
+                raise ValueError('Execution vote missing; use baseline outputs generated with --execute-code')
+            vote = row['execution_vote']
+            predictions[key] = {'answer': vote} if vote is not None else {}
+        else:
+            predictions[key] = row.get('output', row.get('parsed', {}))
     correct = {key: key in predictions and compare_answers(r['answer'], predictions[key])
                for key, (_, r) in references.items()}
-    report = dict(reference_cases=len(references), matched_outputs=len(predictions), ignored_outputs=ignored,
+    report = dict(metric=args.metric, reference_cases=len(references), matched_outputs=len(predictions), ignored_outputs=ignored,
                   missing_outputs=len(references) - len(predictions), correct=sum(correct.values()),
                   accuracy_pct=100 * sum(correct.values()) / len(references),
                   missing_policy='Missing or malformed outputs count incorrect; denominator is the selected reference split.',

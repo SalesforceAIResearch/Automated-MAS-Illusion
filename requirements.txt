@@ -1,1 +1,2 @@
+# Core installation; optional Vertex/generator extras are documented in README.md.
 -e .

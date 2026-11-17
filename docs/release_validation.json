@@ -2,13 +2,13 @@
   "date_utc": "2026-11-17",
   "canonical_test_cases": 588,
   "held_out_validation_cases": 16,
-  "offline_unit_tests": 10,
+  "offline_unit_tests": 11,
   "saved_case_parity_replays": 15,
   "parity_scope": "One saved case per N=2..6 for GPT-OSS Expert-MAS and native Gemini Simple/Expert-MAS. Exact prompt/schema/answer/token-total parity. Network disabled.",
   "clean_install": "Passed installation with vertex and generation optional dependencies; unit tests, data checks and generator imports pass in clean Python3.12 environment.",
   "code_license": "CC-BY-NC-4.0; exact LICENSE.txt bytes retained from origin/main by user instruction.",
   "data_license": "Existing CC-BY-4.0 dataset declaration retained separately.",
-  "release_source_files_scanned": 85,
+  "release_source_files_scanned": 84,
   "credential_or_private_endpoint_pattern_findings": [],
   "upstream_history_text_objects_scanned": 40,
   "upstream_history_credential_pattern_findings": 0,
@@ -56,5 +56,6 @@
       "sha256": "7c63c6960b5a2a7786fef39fa5261caa1c0172abfabd1696ab76f0840f00b134",
       "change": "Exact copy."
     }
-  ]
+  ],
+  "final_review": "README installation and three-tier commands checked; paper plot copied byte-for-byte; separate execution-vote evaluator verified; unrelated generator tasks and internal licensing template removed; existing Python 3.12 validation environment reused."
 }
