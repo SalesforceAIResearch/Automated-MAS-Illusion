@@ -1,5 +1,7 @@
 # Expert-MAS: engineered topology reference
 
+![Expert-MAS pipeline](../../docs/figures/expert_mas_pipeline.png)
+
 Expert-MAS adds investor-specific decomposition and deterministic orchestration
 to the shared meta/retrieval/reasoning setup:
 

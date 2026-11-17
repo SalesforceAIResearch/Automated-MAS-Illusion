@@ -1,5 +1,7 @@
 # Simple-MAS: context-separation anchor
 
+![Simple-MAS pipeline](../../docs/figures/simple_mas_pipeline.png)
+
 Simple-MAS performs three sequential LLM calls:
 
 1. **MetaAgent** extracts investor names, target percentage, question type,

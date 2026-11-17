@@ -47,6 +47,8 @@ versions used for the offline checks. Verification and tests make no API calls.
 
 ## Dataset
 
+![SMFR dataset construction and reasoning pipeline](docs/figures/smfr_dataset_pipeline.png)
+
 The pinned v2 test set has **588 problems**: 96, 96, 104, 152, and 140 for
 2–6 investors, respectively. The **16 validation cases are disjoint** and are
 excluded from test accuracy. Files are ordinary gzip JSONL; Git LFS is not needed.
@@ -63,6 +65,14 @@ size and transaction complexity. Use the pinned files to compare with the paper;
 regenerating from live financial sources can produce different problems.
 
 ## Run the three tiers
+
+**Simple-MAS — context-separation anchor**
+
+![Simple-MAS pipeline](docs/figures/simple_mas_pipeline.png)
+
+**Expert-MAS — topological-ceiling reference**
+
+![Expert-MAS pipeline](docs/figures/expert_mas_pipeline.png)
 
 ```bash
 cp .env.example .env
@@ -148,5 +158,6 @@ New generations can vary with sampling and provider behavior.
 
 ## License
 
-Code: [CC BY-NC 4.0](LICENSE.txt). Dataset: [CC BY 4.0](dataset/LICENSE), as
-specified by the original dataset metadata. See [NOTICE](NOTICE) for attribution.
+Code and dataset are licensed under **CC BY-NC 4.0**. See the
+[code license](LICENSE.txt), [dataset license](dataset/LICENSE), and
+[NOTICE](NOTICE) for attribution.

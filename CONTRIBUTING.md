@@ -30,7 +30,7 @@ security vulnerabilities through [SECURITY.md](SECURITY.md), not public issues.
 
 Contributors must sign the [Salesforce CLA](https://cla.salesforce.com/sign-cla).
 By contributing code, you agree to the project's existing
-[CC BY-NC 4.0 license](LICENSE.txt). The dataset's existing CC BY 4.0 notice is
-separate; see [dataset/LICENSE](dataset/LICENSE).
+[CC BY-NC 4.0 license](LICENSE.txt). The dataset uses the same license;
+see [dataset/LICENSE](dataset/LICENSE).
 
 Please follow our [Code of Conduct](CODE_OF_CONDUCT.md).

@@ -6,6 +6,8 @@ track open positions, calculate financial targets, select valid dates, and
 compare investors. The supplied answer includes `investor_dates`, `comparison`,
 and the final winning investor name(s), or no winner.
 
+![SMFR dataset construction and reasoning pipeline](../docs/figures/smfr_dataset_pipeline.png)
+
 ## Canonical release
 
 | Investors N | Test cases |
@@ -49,8 +51,8 @@ recommendation dataset or a measure of live financial decision quality.
 
 ## License and provenance
 
-The existing SMFR metadata declares CC BY 4.0 for the dataset. Attribute SMFR
-and its accompanying paper when redistributing it. The published release
+The released SMFR dataset and code are licensed under **CC BY-NC 4.0**.
+See [the dataset license](LICENSE) and [repository license](../LICENSE.txt).
+Attribute SMFR and its accompanying paper when redistributing it. The release
 preserves the source annotations and recorded historical price values; no
-third-party benchmark datasets are bundled. Source-data rights and the code's
-CC BY-NC 4.0 license are separate.
+third-party benchmark datasets are bundled.
