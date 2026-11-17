@@ -117,9 +117,9 @@ sandbox; use an isolated environment without credentials for execution.
 
 For other models and historical settings, see the
 [baseline presets](evaluation/SAS/SMFR/README.md),
-[Simple-MAS](evaluation/simple_MAS_for_smfr_dataset/README.md),
-[Expert-MAS](evaluation/expert_MAS_for_smfr_dataset/README.md), and
-[protocol guide](docs/protocols.md). Historical and controlled baselines are
+[Simple-MAS](evaluation/simple_MAS_for_smfr_dataset/README.md), and
+[Expert-MAS](evaluation/expert_MAS_for_smfr_dataset/README.md).
+Historical and controlled baselines are
 separate experiments. Each run saves raw responses, manifests, usage, and timing.
 Supply `--input-rate` and `--output-rate` in USD per million tokens for an
 estimate when the provider does not report cost; otherwise cost is unavailable.
@@ -143,8 +143,8 @@ ties are penalized. For a custom or validation split, supply `--reference PATH`.
 ![SMFR accuracy versus cost across model backbones and systems](docs/figures/smfr_results.png)
 
 The figure uses the paper's plot directly. Click it to view at full size.
-See the paper for accuracy tables, standard deviations, costs, and significance
-analysis, and the [protocol guide](docs/protocols.md) for accounting details.
+See the paper for accuracy tables, standard deviations, costs, significance
+analysis, and accounting details.
 The executable release covers our standalone baselines and engineered systems;
 automated MAS implementations shown for comparison are obtained separately.
 New generations can vary with sampling and provider behavior.

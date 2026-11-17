@@ -36,4 +36,4 @@ sandbox. Use an isolated environment without credentials for generated code.
 The `gemini_*` presets preserve the final Gemini prompts. The `gpt5_historical`
 preset archives the earlier baseline prompt and k; original serving defaults
 were not fully recorded. Controlled/newer presets are labeled separately from
-historical baselines. See [the protocol guide](../../../docs/protocols.md).
+historical baselines.
