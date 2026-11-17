@@ -9,6 +9,29 @@ summaries. Automated MAS framework implementations, trained controllers,
 generated framework architectures, and third-party benchmark datasets are not
 bundled. Obtain those implementations and datasets from their original authors.
 
+## Three-tier evaluation
+
+The paper introduces three reference tiers for diagnosing where an automated
+MAS gains or loses performance. They separate the value of additional sampling,
+retrieval/reasoning context separation, and engineered task decomposition.
+
+| Tier | Reference system | Role in the evaluation |
+|---|---|---|
+| **1 · Cost-efficiency floor** | [CoT-SC](evaluation/SAS/SMFR/README.md) | Multiple single-agent reasoning draws with answer voting establish the reference for judging whether orchestration delivers an accuracy/cost benefit. |
+| **2 · Context-separation anchor** | [Simple-MAS](evaluation/simple_MAS_for_smfr_dataset/README.md) | A three-call pipeline—meta parsing, retrieval, and calculation—separates context processing from reasoning. It tests how much can be achieved through this basic split, without deterministic financial scaffolding. |
+| **3 · Topological-ceiling reference** | [Expert-MAS](evaluation/expert_MAS_for_smfr_dataset/README.md) | Investor-specific decomposition, parallel reasoning branches, and deterministic position tracking and winner aggregation provide an engineered reference for what task-aware orchestration can achieve. |
+
+Comparing an automated MAS with Tier 1 assesses its accuracy/cost tradeoff;
+Tier 2 tests whether it captures the gains available from context separation;
+Tier 3 characterizes the remaining gap to investor-specific decomposition and
+structured scaffolding. **Topological ceiling** names this expert-designed
+reference tier; it does not establish a formal performance upper bound.
+
+**Code-CoT-SC** complements these tiers by testing whether code generation and
+execution account for performance gains. Comparisons should use the same
+backbone, matched test problems, and clearly documented prompt and cost
+protocols; see [the protocol guide](docs/protocols.md).
+
 ## Install and verify
 
 ```bash
