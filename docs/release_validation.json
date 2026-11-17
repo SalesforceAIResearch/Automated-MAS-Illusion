@@ -8,7 +8,7 @@
   "clean_install": "Passed installation with vertex and generation optional dependencies; unit tests, data checks and generator imports pass in clean Python3.12 environment.",
   "code_license": "CC-BY-NC-4.0; exact LICENSE.txt bytes retained from origin/main by user instruction.",
   "data_license": "CC-BY-NC-4.0; updated by explicit user instruction to match the code license. Dataset records contain no embedded license declarations; data files and checksums remain unchanged.",
-  "release_source_files_scanned": 87,
+  "release_source_files_scanned": 78,
   "credential_or_private_endpoint_pattern_findings": [],
   "upstream_history_text_objects_scanned": 128,
   "upstream_history_credential_pattern_findings": 0,
@@ -57,7 +57,7 @@
       "change": "Exact copy."
     }
   ],
-  "final_review": "README installation and three-tier commands checked; paper plot copied byte-for-byte; separate execution-vote evaluator verified; unrelated generator tasks and internal licensing template removed; existing Python 3.12 validation environment reused.",
+  "final_review": "README installation and three-tier commands checked; paper plot copied byte-for-byte; separate execution-vote evaluator verified; unrelated generator tasks and internal licensing template removed; existing Python 3.12 validation environment reused. Archived result snapshots and their summary-only script removed at user request; dataset, runners, evaluator, and paper figures retained.",
   "public_release_audit": {
     "audited_head": "fee0af58352040d7235a66336c8d5c627299d11b",
     "reachable_commits": 24,

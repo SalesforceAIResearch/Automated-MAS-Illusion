@@ -88,7 +88,7 @@ sampling-only 95% bootstrap interval is approximately $530–544.
 The $9.56 GPT-OSS Code-CoT-SC plotted cost is a projection from a different,
 incomplete newer-provider configuration; the plotted 35.49% accuracy comes
 from the first three historical-setting generations. It is not a matched
-measured accuracy/cost pair. The results files retain this qualification.
+measured accuracy/cost pair.
 
 ## Latency
 

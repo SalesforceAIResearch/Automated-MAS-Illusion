@@ -3,7 +3,7 @@
 SMFR (**Synthetic Multi-Hop Financial Reasoning**) benchmark, CoT/CoT-SC and
 Code-CoT/Code-CoT-SC baselines, and our Simple-MAS and Expert-MAS systems.
 This release includes our data generator, prompts, runners, evaluator, and
-result summaries. Automated MAS implementations and third-party benchmark
+paper figures. Automated MAS implementations and third-party benchmark
 datasets must be obtained from their original authors.
 
 ## Three-tier evaluation
@@ -124,7 +124,7 @@ separate experiments. Each run saves raw responses, manifests, usage, and timing
 Supply `--input-rate` and `--output-rate` in USD per million tokens for an
 estimate when the provider does not report cost; otherwise cost is unavailable.
 
-## Evaluate and reproduce summaries
+## Evaluate saved outputs
 
 ```bash
 # Score a new run (also works for baseline or Expert-MAS outputs)
@@ -132,26 +132,19 @@ python -m scripts.evaluate --outputs outputs/gemini_simple_0/outputs.jsonl
 
 # Score the executed-code vote from a --execute-code baseline run
 python -m scripts.evaluate --outputs outputs/gemini_code_0/outputs.jsonl --metric execution
-
-# Recompute released accuracy, sample SD, and paired significance offline
-python -m scripts.summarize_results
-python -m scripts.summarize_results --model Gemini-2.5-Pro --a Simple-MAS --b CoT-SC
 ```
 
 The evaluator joins predictions to canonical problems by SHA-256. Missing or
 malformed outputs count incorrect against the full 588-case test set; false
 ties are penalized. For a custom or validation split, supply `--reference PATH`.
-The summary command uses the **released correctness snapshots**, not newly run
-output directories. Its paired test defaults to best-versus-best historical
-selection; use `--run-a` and `--run-b` to select explicit repetitions.
 
 ## Results from the paper
 
 ![SMFR accuracy versus cost across model backbones and systems](docs/figures/smfr_results.png)
 
 The figure uses the paper's plot directly. Click it to view at full size.
-See [results and accounting notes](results/README.md) for archived correctness
-snapshots, run counts, standard deviations, costs, and significance analysis.
+See the paper for accuracy tables, standard deviations, costs, and significance
+analysis, and the [protocol guide](docs/protocols.md) for accounting details.
 The executable release covers our standalone baselines and engineered systems;
 automated MAS implementations shown for comparison are obtained separately.
 New generations can vary with sampling and provider behavior.

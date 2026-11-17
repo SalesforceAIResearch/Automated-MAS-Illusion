@@ -38,22 +38,6 @@ def verify():
         protocol = json.loads(path.read_text())
         assert protocol['messages'] and any('{{problem}}' in m['content'] for m in protocol['messages']), path
         assert protocol['default_k'] >= 1
-    result_manifest = ROOT / 'results/MANIFEST.json'
-    if result_manifest.exists():
-        from collections import defaultdict
-        groups = defaultdict(set)
-        for row in json.loads(result_manifest.read_text())['artifacts']:
-            path = ROOT / row['path']
-            assert hashlib.sha256(path.read_bytes()).hexdigest() == row['sha256']
-            results = list(read_jsonl(path))
-            assert len(results) == row['records']
-            for result in results:
-                key = (result['model'], result['method'], result['run'], result['scope'])
-                assert result['problem_sha256'] in splits['test']
-                assert result['problem_sha256'] not in groups[key]
-                assert isinstance(result['correct'], bool)
-                groups[key].add(result['problem_sha256'])
-        assert all(len(keys) == 588 for key, keys in groups.items() if key[3] == 'test')
     print('Verified: 588 canonical v2 test cases; 16 disjoint validation cases; exact source checksums; standalone prompt presets; no automated MAS directories.')
 
 
