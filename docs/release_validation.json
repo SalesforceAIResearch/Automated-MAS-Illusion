@@ -10,7 +10,7 @@
   "data_license": "CC-BY-NC-4.0; updated by explicit user instruction to match the code license. Dataset records contain no embedded license declarations; data files and checksums remain unchanged.",
   "release_source_files_scanned": 87,
   "credential_or_private_endpoint_pattern_findings": [],
-  "upstream_history_text_objects_scanned": 40,
+  "upstream_history_text_objects_scanned": 128,
   "upstream_history_credential_pattern_findings": 0,
   "upstream_history_automated_framework_paths": 0,
   "source_parity": [
@@ -57,5 +57,17 @@
       "change": "Exact copy."
     }
   ],
-  "final_review": "README installation and three-tier commands checked; paper plot copied byte-for-byte; separate execution-vote evaluator verified; unrelated generator tasks and internal licensing template removed; existing Python 3.12 validation environment reused."
+  "final_review": "README installation and three-tier commands checked; paper plot copied byte-for-byte; separate execution-vote evaluator verified; unrelated generator tasks and internal licensing template removed; existing Python 3.12 validation environment reused.",
+  "public_release_audit": {
+    "audited_head": "fee0af58352040d7235a66336c8d5c627299d11b",
+    "reachable_commits": 24,
+    "reachable_blob_objects": 132,
+    "text_or_decompressed_objects_scanned": 128,
+    "gzip_objects_decompressed": 7,
+    "known_secret_values_compared": 3,
+    "findings": [],
+    "scope": "All locally reachable Git history after fetching remote branches/tags; gzip datasets/results decompressed; known local credential values compared without exposing them; PNG metadata contains only a Matplotlib software identifier.",
+    "github_surface": "Private, default main; only main and merged release/camera-ready-smfr branches; no tags, releases, workflows, or Actions artifacts at audit time.",
+    "cleanup": "Removed unused archived Agentless-specific repair prompt and added credential-file ignore patterns."
+  }
 }

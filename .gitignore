@@ -15,3 +15,13 @@ dist/
 outputs/
 *.log
 *.pid
+
+# Local authentication material
+credentials.json
+service-account*.json
+application_default_credentials.json
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519
