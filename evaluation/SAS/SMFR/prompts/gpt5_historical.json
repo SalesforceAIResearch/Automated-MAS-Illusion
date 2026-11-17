@@ -1,0 +1,20 @@
+{
+  "name": "gpt5_historical",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant.\n\nReply EXACTLY with the following JSON format.\n{'thinking': 'Your thinking.', 'answer': 'Your answer. Your answer contains a single-line JSON **string** with keys: \"answer\" and \"code\". \"answer\" must be the final winner name (string), or a list of names for ties. \"code\" must be a JSON string with escaped newlines (use \\\\\\\\n, no markdown fences). The code must define solve() and return a dict with keys \"investor_dates\", \"comparison\", and \"answer\". Include all required input data in the code. Do not include extra text.'}\nDO NOT MISS ANY REQUEST FIELDS and ensure that your response is a well-formed JSON object!\n"
+    },
+    {
+      "role": "user",
+      "content": "# Your Task:\nSolve this problem:\n{{problem}}\n\n\nPlease think step by step and then solve the task."
+    }
+  ],
+  "temperature": null,
+  "max_output_tokens": null,
+  "json_mode": false,
+  "default_k": 5,
+  "code_requested": false,
+  "voting": "raw_answer",
+  "note": "Frozen historical CoT-SC baseline prompt. Dynamic agent identifiers are frozen; omitted API sampling controls reflect historical provider defaults. This preset archives the prompt separately from newer controlled prompts."
+}

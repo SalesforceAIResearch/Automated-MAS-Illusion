@@ -1,0 +1,60 @@
+{
+  "date_utc": "2026-11-17",
+  "canonical_test_cases": 588,
+  "held_out_validation_cases": 16,
+  "offline_unit_tests": 10,
+  "saved_case_parity_replays": 15,
+  "parity_scope": "One saved case per N=2..6 for GPT-OSS Expert-MAS and native Gemini Simple/Expert-MAS. Exact prompt/schema/answer/token-total parity. Network disabled.",
+  "clean_install": "Passed installation with vertex and generation optional dependencies; unit tests, data checks and generator imports pass in clean Python3.12 environment.",
+  "code_license": "CC-BY-NC-4.0; exact LICENSE.txt bytes retained from origin/main by user instruction.",
+  "data_license": "Existing CC-BY-4.0 dataset declaration retained separately.",
+  "release_source_files_scanned": 85,
+  "credential_or_private_endpoint_pattern_findings": [],
+  "upstream_history_text_objects_scanned": 40,
+  "upstream_history_credential_pattern_findings": 0,
+  "upstream_history_automated_framework_paths": 0,
+  "source_parity": [
+    {
+      "component": "simple-MAS pipeline",
+      "source_sha256": "49eb791864008ad4848302a365db4a5248f4f5e6e640d37458e788c7235ab911",
+      "release_sha256": "4afbb4e605efc500cc488f745b5eaeaa8a3561c58967ae8df39cf92e6c8873ba",
+      "change": "Only package-relative agents import; financial/control-flow logic unchanged."
+    },
+    {
+      "component": "simple-MAS prompt retrieval.txt",
+      "sha256": "88db2a61acccf01fb560c4ad8435a745a66f7bb2d00963a397160258a1ea35db",
+      "change": "Exact copy."
+    },
+    {
+      "component": "simple-MAS prompt calculation.txt",
+      "sha256": "cac735a56ed4bf5be0bb31b5b19936bd89c3b2eeff7025757d93f15576ea84fd",
+      "change": "Exact copy."
+    },
+    {
+      "component": "simple-MAS prompt meta_agent.txt",
+      "sha256": "7c63c6960b5a2a7786fef39fa5261caa1c0172abfabd1696ab76f0840f00b134",
+      "change": "Exact copy."
+    },
+    {
+      "component": "expert-MAS pipeline",
+      "source_sha256": "702f2fcbfa9e5e55a2970951375fe7a84e07d170e40e6638027eda384ec56bb7",
+      "release_sha256": "045646119b722899b146a88e63ecfb561e9c6ec1ae9df851179a46e510ec10b0",
+      "change": "Only package-relative agents import; financial/control-flow logic unchanged."
+    },
+    {
+      "component": "expert-MAS prompt calculate.txt",
+      "sha256": "a0f8f15a66e87e650dd4e32c788df06e957492cba486fe3a9f5b119e50377211",
+      "change": "Exact copy."
+    },
+    {
+      "component": "expert-MAS prompt extract.txt",
+      "sha256": "5647f2843975d2b5eacab0ee0d8f18d8ca3f9b46a96b7d6375991b63481830fd",
+      "change": "Exact copy."
+    },
+    {
+      "component": "expert-MAS prompt meta_agent.txt",
+      "sha256": "7c63c6960b5a2a7786fef39fa5261caa1c0172abfabd1696ab76f0840f00b134",
+      "change": "Exact copy."
+    }
+  ]
+}

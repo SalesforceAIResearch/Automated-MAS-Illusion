@@ -1,7 +1,7 @@
 """Generate balanced dataset with all combinations of parameters."""
 import sys
 import random
-from config_schema import smfr_comparative_target_config
+from config_schema import stock_comparative_target_config
 from problem_composer import ProblemComposer
 import json
 from itertools import product
@@ -52,10 +52,10 @@ def generate_balanced_dataset(
     print(f"Aggregations: {aggregations}")
     print(f"Price types: {price_types}")
     print(f"Target percentages: {len(target_percentages)} values from {min(target_percentages)}% to {max(target_percentages)}%")
-    print(f"Number of investors: Randomly chosen between 5-10 per sample")
-    print(f"Number of distractors: Randomly chosen between 5-10 per sample")
-    print(f"Breadth: Randomly chosen between 5-10 per sample")
-    print(f"Depth: Randomly chosen between 5-10 (even) per sample")
+    print(f"Number of investors: {num_investors_start}")
+    print(f"Number of distractors: {num_distractors_start}")
+    print(f"Breadth: {breadth_start}")
+    print(f"Depth: {depth_start} (rounded up to even)")
     print(f"\nTotal combinations: {len(combinations)}")
     print(f"Samples per combination: {samples_per_combination}")
     print(f"Total samples to generate: {total_samples}")
@@ -90,7 +90,7 @@ def generate_balanced_dataset(
                     depth += 1
 
                 # Create config
-                config = smfr_comparative_target_config(
+                config = stock_comparative_target_config(
                     num_investors=num_investors,
                     question_type=q_type,
                     aggregation=agg,

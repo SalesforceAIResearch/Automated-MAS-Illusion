@@ -20,7 +20,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from agents import (
+from .agents import (
     MetaAgent, ExtractAgent, CalculateAgent, ModelClient,
     ProblemMetaResponse, PipelineStats, CallUsage,
 )
@@ -99,16 +99,16 @@ async def _extract_transactions_with_prices(
     stats: PipelineStats,
 ) -> List[Dict]:
     """Extract all transactions for one investor AND look up each transaction's
-    price from the smfr price history in a single LLM call."""
+    price from the stock price history in a single LLM call."""
     query = (
-        f'The context has two sections: (1) smfr price history tables '
+        f'The context has two sections: (1) stock price history tables '
         f'(columns: Date/Open/High/Low/Close/Volume), and (2) a transaction events '
         f'section with plain sentences like "Alice bought 54 shares of Apple."\n'
         f'Do the following in one pass for investor {investor}:\n'
         f'1. From the transaction events section ONLY, extract every transaction '
         f'(some companies will have only a buy or only a sell — include all of them).\n'
         f'2. For each transaction, look up the exact {price_type} price for that '
-        f'company on that date from the smfr price history tables.\n'
+        f'company on that date from the stock price history tables.\n'
         f'For action: normalize to exactly "buy" (bought/acquired/purchased) '
         f'or "sell" (sold/disposed/divested).\n'
         f'Return as a JSON array, e.g.\n'
@@ -224,7 +224,7 @@ async def _extract_valid_dates(
         date_filter = f"Only include dates STRICTLY BEFORE {position_date} (the sell date)."
 
     query = (
-        f"Scan the {company} smfr price history in the context and list ALL dates "
+        f"Scan the {company} stock price history in the context and list ALL dates "
         f"where the {price_type} price is {comparator} {target_price:.4f}. "
         f"{date_filter} "
         f"Include every matching date — do not stop early. "

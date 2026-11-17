@@ -28,19 +28,19 @@ class AggregationOp(Enum):
 @dataclass
 class DataSourceConfig:
     """Configuration for a data source."""
-    source_type: str  # 'smfr', 'currency', 'weather'
+    source_type: str  # 'stock', 'currency', 'weather'
     params: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class TaskConfig:
     """Configuration for a single task type."""
-    task_type: str  # 'smfr', 'math', 'coding'
+    task_type: str  # 'stock', 'math', 'coding'
 
     # Random seed for reproducibility
     seed: int = 100
 
-    # Number of distinct entities in haystack (e.g., number of smfr)
+    # Number of distinct entities in haystack (e.g., number of stocks)
     breadth: int = 3
 
     # Depth of operations per entity (e.g., number of transactions)
@@ -90,10 +90,10 @@ class PipelineConfig:
 
 # Predefined configurations for common use cases
 
-def smfr_single_investor_config(**kwargs) -> PipelineConfig:
-    """Configuration for single investor smfr problem."""
+def stock_single_investor_config(**kwargs) -> PipelineConfig:
+    """Configuration for single investor stock problem."""
     defaults = {
-        'task_type': 'smfr',
+        'task_type': 'stock',
         'seed': 100,
         'breadth': 3,
         'depth': 5,
@@ -116,10 +116,10 @@ def smfr_single_investor_config(**kwargs) -> PipelineConfig:
     )
 
 
-def smfr_comparison_config(num_investors: int = 2, **kwargs) -> PipelineConfig:
+def stock_comparison_config(num_investors: int = 2, **kwargs) -> PipelineConfig:
     """Configuration for comparing multiple investors."""
     defaults = {
-        'task_type': 'smfr',
+        'task_type': 'stock',
         'seed': 100,
         'breadth': 3,
         'depth': 5,
@@ -146,7 +146,7 @@ def smfr_comparison_config(num_investors: int = 2, **kwargs) -> PipelineConfig:
     )
 
 
-def smfr_comparative_target_config(num_investors: int = 2,
+def stock_comparative_target_config(num_investors: int = 2,
                                     question_type: str = 'reverse_target_sell',
                                     aggregation: str = 'earliest',
                                     **kwargs) -> PipelineConfig:
@@ -163,7 +163,7 @@ def smfr_comparative_target_config(num_investors: int = 2,
     task_params = kwargs.pop('task_params', {})
 
     defaults = {
-        'task_type': 'smfr',
+        'task_type': 'stock',
         'seed': 100,
         'breadth': 2,
         'depth': 2,  # Must be even for pairing
@@ -232,8 +232,8 @@ def mixed_task_config(tasks: List[Dict[str, Any]]) -> List[PipelineConfig]:
         task_type = task_spec['task_type']
         params = task_spec.get('params', {})
 
-        if task_type == 'smfr':
-            config = smfr_single_investor_config(**params)
+        if task_type == 'stock':
+            config = stock_single_investor_config(**params)
         elif task_type == 'math':
             config = math_single_config(**params)
         else:
@@ -250,7 +250,7 @@ def mixed_task_config(tasks: List[Dict[str, Any]]) -> List[PipelineConfig]:
 
 # Template library
 DEFAULT_TEMPLATES = {
-    'smfr_single': """Here is some data on the smfr prices of a few companies. Use this data to answer the following questions:
+    'stock_single': """Here is some data on the stock prices of a few companies. Use this data to answer the following questions:
 
 {haystack}
 
@@ -259,7 +259,7 @@ DEFAULT_TEMPLATES = {
 How much money has {entity} spent on buying shares if all purchases were made at {price_type} prices?
 """,
 
-    'smfr_single_profit_loss': """Here is some data on the smfr prices of a few companies. Use this data to answer the following questions:
+    'stock_single_profit_loss': """Here is some data on the stock prices of a few companies. Use this data to answer the following questions:
 
 {haystack}
 
@@ -268,25 +268,25 @@ How much money has {entity} spent on buying shares if all purchases were made at
 What is {entity}'s total profit or loss from these transactions if all trades were made at {price_type} prices?
 """,
 
-    'smfr_single_reverse_sell': """Here is some data on the smfr prices of a few companies. Use this data to answer the following questions:
+    'stock_single_reverse_sell': """Here is some data on the stock prices of a few companies. Use this data to answer the following questions:
 
 {haystack}
 
 {actions}
 
-{entity} has completed several transactions and holds shares in one remaining smfr that needs to be sold. On which dates could {entity} sell these remaining shares to achieve at least {target_description} overall portfolio profit, if all transactions were made at {price_type} prices?
+{entity} has completed several transactions and holds shares in one remaining stock that needs to be sold. On which dates could {entity} sell these remaining shares to achieve at least {target_description} overall portfolio profit, if all transactions were made at {price_type} prices?
 """,
 
-    'smfr_single_reverse_buy': """Here is some data on the smfr prices of a few companies. Use this data to answer the following questions:
+    'stock_single_reverse_buy': """Here is some data on the stock prices of a few companies. Use this data to answer the following questions:
 
 {haystack}
 
 {actions}
 
-{entity} has completed several transactions and has already sold shares in one smfr but has not yet bought them. On which dates could {entity} have bought these shares to achieve at least {target_description} overall portfolio profit when they were sold, if all transactions were made at {price_type} prices?
+{entity} has completed several transactions and has already sold shares in one stock but has not yet bought them. On which dates could {entity} have bought these shares to achieve at least {target_description} overall portfolio profit when they were sold, if all transactions were made at {price_type} prices?
 """,
 
-    'smfr_compare_two': """Here is some data on the smfr prices of a few companies. Use this data to answer the following questions:
+    'stock_compare_two': """Here is some data on the stock prices of a few companies. Use this data to answer the following questions:
 
 {haystack}
 
@@ -297,25 +297,25 @@ What is {entity}'s total profit or loss from these transactions if all trades we
 Who spent {comparison_word} money buying shares if all purchases were made at {price_type} prices?
 """,
 
-    'smfr_compare_two_reverse_sell': """Here is some data on the smfr prices of a few companies. Use this data to answer the following questions:
+    'stock_compare_two_reverse_sell': """Here is some data on the stock prices of a few companies. Use this data to answer the following questions:
 
 {haystack}
 
 {all_actions}
 
-Each investor has completed several transactions and holds shares in one remaining common smfr. Based on when they could sell these remaining shares to achieve at least {target_description} overall portfolio profit, who has the {timing_word} possible sell date (the {timing_word} date in their list of valid dates) to reach this target, if all transactions were made at {price_type} prices?
+Each investor has completed several transactions and holds shares in one remaining common stock. Based on when they could sell these remaining shares to achieve at least {target_description} overall portfolio profit, who has the {timing_word} possible sell date (the {timing_word} date in their list of valid dates) to reach this target, if all transactions were made at {price_type} prices?
 """,
 
-    'smfr_compare_two_reverse_buy': """Here is some data on the smfr prices of a few companies. Use this data to answer the following questions:
+    'stock_compare_two_reverse_buy': """Here is some data on the stock prices of a few companies. Use this data to answer the following questions:
 
 {haystack}
 
 {all_actions}
 
-Each investor has completed several transactions and has already sold shares in one common smfr but has not yet bought them. Based on when they would have had to buy these shares to achieve at least {target_description} overall portfolio profit when they sold, who has the {timing_word} possible buy date (the {timing_word} date in their list of valid dates) to reach this target, if all transactions were made at {price_type} prices?
+Each investor has completed several transactions and has already sold shares in one common stock but has not yet bought them. Based on when they would have had to buy these shares to achieve at least {target_description} overall portfolio profit when they sold, who has the {timing_word} possible buy date (the {timing_word} date in their list of valid dates) to reach this target, if all transactions were made at {price_type} prices?
 """,
 
-    'smfr_compare_multi': """Here is some data on the smfr prices of a few companies. Use this data to answer the following questions:
+    'stock_compare_multi': """Here is some data on the stock prices of a few companies. Use this data to answer the following questions:
 
 {haystack}
 
@@ -324,22 +324,22 @@ Each investor has completed several transactions and has already sold shares in 
 Who spent the {superlative_word} money buying shares if all purchases were made at {price_type} prices?
 """,
 
-    'smfr_compare_multi_reverse_sell': """Here is some data on the smfr prices of a few companies. Use this data to answer the following questions:
+    'stock_compare_multi_reverse_sell': """Here is some data on the stock prices of a few companies. Use this data to answer the following questions:
 
 {haystack}
 
 {all_actions}
 
-Each investor has completed several transactions and holds shares in one remaining common smfr. Based on when they could sell these remaining shares to achieve at least {target_description} overall portfolio profit, who has the {timing_word} possible sell date (the {timing_word} date in their list of valid dates) to reach this target, if all transactions were made at {price_type} prices?
+Each investor has completed several transactions and holds shares in one remaining common stock. Based on when they could sell these remaining shares to achieve at least {target_description} overall portfolio profit, who has the {timing_word} possible sell date (the {timing_word} date in their list of valid dates) to reach this target, if all transactions were made at {price_type} prices?
 """,
 
-    'smfr_compare_multi_reverse_buy': """Here is some data on the smfr prices of a few companies. Use this data to answer the following questions:
+    'stock_compare_multi_reverse_buy': """Here is some data on the stock prices of a few companies. Use this data to answer the following questions:
 
 {haystack}
 
 {all_actions}
 
-Each investor has completed several transactions and has already sold shares in one common smfr but has not yet bought them. Based on when they would have had to buy these shares to achieve at least {target_description} overall portfolio profit when they sold, who has the {timing_word} possible buy date (the {timing_word} date in their list of valid dates) to reach this target, if all transactions were made at {price_type} prices?
+Each investor has completed several transactions and has already sold shares in one common stock but has not yet bought them. Based on when they would have had to buy these shares to achieve at least {target_description} overall portfolio profit when they sold, who has the {timing_word} possible buy date (the {timing_word} date in their list of valid dates) to reach this target, if all transactions were made at {price_type} prices?
 """,
 
     'math_single': """Solve the following problem:

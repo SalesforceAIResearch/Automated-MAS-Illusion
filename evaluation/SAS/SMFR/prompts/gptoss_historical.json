@@ -1,0 +1,43 @@
+{
+  "name": "gptoss_historical",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Here is the question:\n{{problem}}\nFirst, solve the problem and explain your reasoning step-by-step. Provide your reasoning and final answer as `analysis` and `answer`. Then write code to solve this problem based on the following instructions.  \nTo solve this problem, write Python code with a solve() function that returns a dictionary. When your code is executed, solve() should return, for example:{\n    \"investor_dates\": {\n        \"Alice\": [\"November 19, 2025\", \"November 21, 2025\"],\n        \"Bob\": [\"November 25, 2025\"],\n        \"Charlie\": []\n    },      \n    \"comparison\": {\n        \"Alice\": \"November 19, 2025\",\n        \"Bob\": \"November 25, 2025\",\n        \"Charlie\": None\n    },      \n    \"answer\": \"Alice\"\n}\n\nFormat:\n- \"investor_dates\": dict mapping each investor name to list of valid dates (strings in \"Month Day, Year\" format)\n- \"comparison\": dict mapping each investor name to their first valid date or None\n- \"answer\": winning investor's name (string), or list of names if tied, or None if no one achieves target\n\nFor ties, return a list:\n{\"answer\": [\"Alice\", \"Bob\"]}\n\nEnsure that all required input data is included within the code as needed.\n\n\nSolve step by step. Provide your analysis, final answer (investor name or names), and Python code with a solve() function that returns a dict with investor_dates, comparison, and answer."
+    }
+  ],
+  "temperature": 1.0,
+  "max_output_tokens": null,
+  "reasoning_effort": null,
+  "schema": {
+    "properties": {
+      "analysis": {
+        "description": "Step by Step reasoning",
+        "title": "Analysis",
+        "type": "string"
+      },
+      "answer": {
+        "description": "Final answer, ONLY NAME (or list of names for ties)",
+        "title": "Answer",
+        "type": "string"
+      },
+      "code": {
+        "description": "Code with solve() function and all required input data",
+        "title": "Code",
+        "type": "string"
+      }
+    },
+    "required": [
+      "analysis",
+      "answer",
+      "code"
+    ],
+    "title": "ResponseSchema",
+    "type": "object"
+  },
+  "json_mode": true,
+  "default_k": 5,
+  "code_requested": true,
+  "voting": "historical_multiset",
+  "note": "Historical CoT-SC requested both answer and code. Text and execution scores reuse the same generations; do not compare this to a newly text-only prompt without noting the protocol change."
+}

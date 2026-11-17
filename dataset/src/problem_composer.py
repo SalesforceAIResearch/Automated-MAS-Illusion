@@ -8,7 +8,7 @@ tasks, applying aggregation operations, and formatting output.
 from typing import Dict, Any, List, Optional
 from config_schema import PipelineConfig, AggregationOp, get_template, DEFAULT_TEMPLATES
 from task_base import BaseTask
-from tasks.smfr_task import SMFRTask
+from tasks.stock_task import StockTask
 from tasks.math_task import MathTask
 from tasks.coding_task import CodingTask
 from tqdm import tqdm
@@ -57,8 +57,8 @@ class ProblemComposer:
             'task_params': task_config.task_params
         }
 
-        if task_type == 'smfr':
-            return SMFRTask(config_dict)
+        if task_type == 'stock':
+            return StockTask(config_dict)
         elif task_type == 'math':
             return MathTask(config_dict)
         elif task_type == 'coding':
@@ -251,17 +251,17 @@ class ProblemComposer:
                 investor_name = needle.get(entity_key)
                 investor_dates[investor_name] = date_list
 
-                # Get first date for comparison (or None)
-                comparison[investor_name] = date_list[0] if date_list else None
+                # Get last date for comparison (or None)
+                comparison[investor_name] = date_list[-1] if date_list else None
 
-            # Find winners (latest first date)
+            # Find winners (latest last date)
             # Handle ties: multiple investors with same latest date
             winners = []
             latest_date = None
 
-            for investor_name, first_date_str in comparison.items():
-                if first_date_str:
-                    first_date = datetime.strptime(first_date_str, "%B %d, %Y")
+            for investor_name, last_date_str in comparison.items():
+                if last_date_str:
+                    first_date = datetime.strptime(last_date_str, "%B %d, %Y")
 
                     if latest_date is None or first_date > latest_date:
                         latest_date = first_date
@@ -347,33 +347,33 @@ class ProblemComposer:
         # Select default template based on task type and instance count
         task_type = self.task.get_task_type()
 
-        if task_type == 'smfr':
-            # Check question type for smfr tasks
+        if task_type == 'stock':
+            # Check question type for stock tasks
             question_type = self.config.task.task_params.get('question_type', 'spending')
 
             if num_instances == 1:
                 if question_type == 'profit_loss':
-                    template_name = 'smfr_single_profit_loss'
+                    template_name = 'stock_single_profit_loss'
                 elif question_type == 'reverse_target_sell':
-                    template_name = 'smfr_single_reverse_sell'
+                    template_name = 'stock_single_reverse_sell'
                 elif question_type == 'reverse_target_buy':
-                    template_name = 'smfr_single_reverse_buy'
+                    template_name = 'stock_single_reverse_buy'
                 else:
-                    template_name = 'smfr_single'
+                    template_name = 'stock_single'
             elif num_instances == 2:
                 if question_type == 'reverse_target_sell':
-                    template_name = 'smfr_compare_two_reverse_sell'
+                    template_name = 'stock_compare_two_reverse_sell'
                 elif question_type == 'reverse_target_buy':
-                    template_name = 'smfr_compare_two_reverse_buy'
+                    template_name = 'stock_compare_two_reverse_buy'
                 else:
-                    template_name = 'smfr_compare_two'
+                    template_name = 'stock_compare_two'
             else:
                 if question_type == 'reverse_target_sell':
-                    template_name = 'smfr_compare_multi_reverse_sell'
+                    template_name = 'stock_compare_multi_reverse_sell'
                 elif question_type == 'reverse_target_buy':
-                    template_name = 'smfr_compare_multi_reverse_buy'
+                    template_name = 'stock_compare_multi_reverse_buy'
                 else:
-                    template_name = 'smfr_compare_multi'
+                    template_name = 'stock_compare_multi'
         elif task_type == 'math':
             template_name = 'math_single'
         elif task_type == 'coding':

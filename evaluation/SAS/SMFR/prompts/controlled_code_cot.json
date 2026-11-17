@@ -1,0 +1,20 @@
+{
+  "name": "controlled_code_cot",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant.\n\nReply EXACTLY with a well-formed JSON object containing these fields: {\"thinking\": \"Your step-by-step reasoning.\", \"answer\": \"The final winner name, or a list of winner names for ties.\", \"code\": \"Self-contained Python defining solve(), as a JSON string with escaped newlines.\"}. Do not omit fields or include markdown fences."
+    },
+    {
+      "role": "user",
+      "content": "# Your Task:\n{{problem}}\n\nPlease think step by step and then solve the task. Also write a Python function solve() that computes the answer programmatically. The function must be completely self-contained (embed all required data from the problem), define solve(), and return a dict with keys 'investor_dates', 'comparison', and 'answer'."
+    }
+  ],
+  "temperature": null,
+  "max_output_tokens": null,
+  "json_mode": true,
+  "default_k": 3,
+  "code_requested": true,
+  "voting": "canonical_name_sets",
+  "note": "Text-only and code-generating prompts are separate. CoT is k=1; CoT-SC is k>1. Code execution votes are separate from model-answer votes."
+}

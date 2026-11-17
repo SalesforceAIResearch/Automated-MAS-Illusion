@@ -14,7 +14,7 @@ class BaseDataSource(ABC):
     """
     Abstract base class for time-varying data sources.
 
-    Data sources provide external data that changes over time (smfr, weather, currencies).
+    Data sources provide external data that changes over time (stocks, weather, currencies).
     They support fetching, caching, serialization, and updating.
     """
 
@@ -63,7 +63,7 @@ class BaseDataSource(ABC):
         Return the type identifier for this data source.
 
         Returns:
-            String identifier (e.g., 'smfr', 'weather', 'currency')
+            String identifier (e.g., 'stock', 'weather', 'currency')
         """
         pass
 
@@ -165,7 +165,7 @@ class BaseTask(ABC):
         Return the type identifier for this task.
 
         Returns:
-            String identifier (e.g., 'smfr', 'math', 'coding')
+            String identifier (e.g., 'stock', 'math', 'coding')
         """
         pass
 

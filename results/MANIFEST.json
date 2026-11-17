@@ -1,0 +1,11 @@
+{
+  "artifacts": [
+    {
+      "path": "results/paired_correctness.jsonl.gz",
+      "sha256": "614007cfa8c1227ec29a330f3585ae1ebc85228d07add4a2295699816ab4092d",
+      "records": 31782
+    }
+  ],
+  "scope": "Only our CoT-SC, Simple-MAS and Expert-MAS outcomes; automated MAS code/outputs excluded.",
+  "scoring": "Canonical v2 compare_answers or canonical final-answer name sets as recorded by each protocol; see docs/protocols.md."
+}

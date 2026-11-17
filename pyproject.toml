@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "automated-mas-illusion"
+version = "0.1.0"
+description = "SMFR benchmark, standalone reasoning baselines, and engineered multi-agent reference systems"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE.txt"}
+dependencies = [
+  "openai>=2.13,<3",
+  "httpx>=0.28,<1",
+  "pydantic>=2.12,<3",
+  "python-dotenv>=1.0,<2",
+  "tqdm>=4.60,<5",
+]
+
+[project.optional-dependencies]
+vertex = ["google-genai>=1.56,<2"]
+generation = ["yfinance>=0.2.66", "python-dateutil>=2.9"]
+
+[tool.setuptools.packages.find]
+include = ["evaluation*", "dataset*", "scripts*"]
+
+[tool.setuptools.package-data]
+"evaluation.SAS.SMFR" = ["prompts/*.json"]
+"evaluation.SAS" = ["prompts/*.json"]
+"evaluation.simple_MAS_for_smfr_dataset" = ["prompts/*.txt"]
+"evaluation.expert_MAS_for_smfr_dataset" = ["prompts/*.txt"]
+"dataset" = ["MANIFEST.json", "data/*.gz"]

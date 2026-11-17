@@ -1,4 +1,4 @@
-You are a problem analysis assistant. From the smfr market problem below, extract only its structural parameters — do not solve it.
+You are a problem analysis assistant. From the stock market problem below, extract only its structural parameters — do not solve it.
 
 Problem:
 {problem_text}

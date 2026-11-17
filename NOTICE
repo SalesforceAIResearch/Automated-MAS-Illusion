@@ -1,0 +1,11 @@
+This repository distributes our SMFR benchmark, standalone baseline prompts
+and runners, and engineered Simple-MAS and Expert-MAS reference pipelines for
+"The Illusion of Automatically Orchestrated Multi-Agent Advantage".
+
+The code license is CC BY-NC 4.0, retained unchanged from the target repository.
+Dataset licensing is recorded separately in dataset/LICENSE. The release
+includes synthetic tasks built from recorded Yahoo Finance price observations.
+
+Automated MAS framework implementations and third-party benchmark datasets
+are not redistributed here. Names of external methods identify experimental
+comparators and do not imply their code is included or relicensed.

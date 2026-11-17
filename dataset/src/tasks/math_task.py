@@ -2,7 +2,7 @@
 Generic math problem generation task.
 
 This task generates various types of math problems including arithmetic,
-algebra, and word problems. Unlike smfr tasks, these don't require
+algebra, and word problems. Unlike stock tasks, these don't require
 time-varying data sources.
 """
 

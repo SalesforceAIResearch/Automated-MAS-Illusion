@@ -1,40 +1,11 @@
-"""
-Agent classes for the manual MAS pipeline.
-
-Three agents:
-  MetaAgent      — parses problem text into structured parameters
-  ExtractAgent   — generic information retrieval from text
-  CalculateAgent — generic numerical computation
-
-All agents share a single ModelClient that accepts a response_format per call.
-Each call returns (response, CallUsage) so the pipeline can accumulate cost stats.
-"""
-
-import os
-import re
-import json
-import asyncio
-import traceback
+"""Expert-MAS schemas, prompt agents, and token accounting."""
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Dict, Optional, List, Tuple, Type
 from pydantic import BaseModel
-from openai import OpenAI
-import openai
-
-try:
-    from google import genai as _genai
-    from google.genai import types as _genai_types
-    _GENAI_AVAILABLE = True
-except ImportError:
-    _GENAI_AVAILABLE = False
-
 PROMPTS_DIR = Path(__file__).parent / "prompts"
-
-# ---------------------------------------------------------------------------
-# Model pricing  (USD per 1M tokens, input / output)
-# ---------------------------------------------------------------------------
 
 MODEL_PRICING: Dict[str, Dict[str, float]] = {
     # OpenAI
@@ -62,8 +33,6 @@ MODEL_PRICING: Dict[str, Dict[str, float]] = {
     "claude-sonnet-4-6":              {"input": 3.00,  "output": 15.00},
     "claude-opus-4-6":                {"input": 15.00, "output": 75.00},
 }
-
-
 def get_pricing(model_name: str) -> Optional[Dict[str, float]]:
     """Look up pricing by exact match, then by prefix (handles versioned IDs)."""
     if model_name in MODEL_PRICING:
@@ -72,11 +41,6 @@ def get_pricing(model_name: str) -> Optional[Dict[str, float]]:
         if model_name.startswith(key):
             return MODEL_PRICING[key]
     return None
-
-
-# ---------------------------------------------------------------------------
-# Token / cost tracking
-# ---------------------------------------------------------------------------
 
 @dataclass
 class CallUsage:
@@ -87,7 +51,6 @@ class CallUsage:
     @property
     def total_tokens(self) -> int:
         return self.input_tokens + self.output_tokens
-
 
 @dataclass
 class PipelineStats:
@@ -147,11 +110,6 @@ class PipelineStats:
             },
         }
 
-
-# ---------------------------------------------------------------------------
-# Pydantic response models
-# ---------------------------------------------------------------------------
-
 class ProblemMetaResponse(BaseModel):
     investors: List[str]
     question_type: str        # "sell" or "buy"
@@ -159,20 +117,13 @@ class ProblemMetaResponse(BaseModel):
     aggregation: str          # "earliest" or "latest"
     price_type: str           # "Open" or "Close"
 
-
 class ExtractResponse(BaseModel):
     result: str    # JSON-encoded value — parse with json.loads()
     reasoning: str
 
-
 class CalculateResponse(BaseModel):
     result: str    # JSON-encoded value — parse with json.loads()
     reasoning: str
-
-
-# ---------------------------------------------------------------------------
-# Model client — abstract base + provider implementations
-# ---------------------------------------------------------------------------
 
 class ModelClient(ABC):
     """Abstract base for all model backends.
@@ -189,186 +140,6 @@ class ModelClient(ABC):
     ) -> Tuple[Optional[BaseModel], CallUsage]:
         ...
 
-
-_CUSTOM_BASE_URLS: Dict[str, str] = {
-    # Add custom base URLs here if using a non-OpenAI-compatible gateway.
-    # e.g. "gpt-oss-120b": "https://your-gateway/v1"
-}
-_DEFAULT_OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "")
-_DEFAULT_OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-
-# Models whose gateway returns delta instead of message (streaming-style response)
-_DELTA_RESPONSE_MODELS = {"gpt-oss-120b"}
-
-
-class OpenAIModelClient(ModelClient):
-    """Wraps the OpenAI API (or a compatible gateway) with structured-output parsing."""
-
-    def __init__(self, model_name: str = "gpt-4.1-2025-04-14"):
-        super().__init__(model_name)
-        base_url = _CUSTOM_BASE_URLS.get(model_name, _DEFAULT_OPENAI_BASE_URL)
-        self.client = OpenAI(
-            base_url=base_url,
-            api_key=_DEFAULT_OPENAI_API_KEY,
-        )
-
-    async def generate(
-        self, prompt: str, response_format: Type[BaseModel]
-    ) -> Tuple[Optional[BaseModel], CallUsage]:
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, self._sync_generate, prompt, response_format
-        )
-
-    def _sync_generate(
-        self, prompt: str, response_format: Type[BaseModel]
-    ) -> Tuple[Optional[BaseModel], CallUsage]:
-        usage = CallUsage()
-        try:
-            if self.model_name in _DELTA_RESPONSE_MODELS:
-                return self._sync_generate_delta(prompt, response_format, usage)
-            return self._sync_generate_parsed(prompt, response_format, usage)
-        except openai.APITimeoutError:
-            return None, usage
-        except Exception:
-            traceback.print_exc()
-            return None, usage
-
-    def _sync_generate_parsed(
-        self, prompt: str, response_format: Type[BaseModel], usage: CallUsage
-    ) -> Tuple[Optional[BaseModel], CallUsage]:
-        """Standard path: beta.parse with structured output."""
-        kwargs = dict(
-            model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
-            response_format=response_format,
-            timeout=600,
-        )
-        if not any(x in self.model_name for x in ("o3", "o4", "gpt-5", "gpt-oss")):
-            kwargs["temperature"] = 0.0
-
-        completion = self.client.beta.chat.completions.parse(**kwargs)
-
-        if completion.usage:
-            usage.input_tokens = completion.usage.prompt_tokens or 0
-            usage.output_tokens = completion.usage.completion_tokens or 0
-
-        msg = completion.choices[0].message
-        if msg.parsed:
-            return response_format.model_validate(msg.parsed), usage
-        return None, usage
-
-    def _sync_generate_delta(
-        self, prompt: str, response_format: Type[BaseModel], usage: CallUsage
-    ) -> Tuple[Optional[BaseModel], CallUsage]:
-        """Fallback for gateways that return delta instead of message.
-
-        Appends a JSON schema instruction and parses the raw text response.
-        """
-        schema = response_format.model_json_schema()
-        fields = list(schema.get("properties", {}).keys())
-        json_prompt = (
-            prompt
-            + f"\n\nRespond with a JSON object containing exactly these fields: {fields}. "
-            "Output only valid JSON, no markdown fences."
-        )
-        for attempt in range(3):
-            try:
-                completion = self.client.chat.completions.create(
-                    model=self.model_name,
-                    messages=[{"role": "user", "content": json_prompt}],
-                    timeout=1200,
-                )
-                break
-            except openai.InternalServerError as e:
-                if attempt == 2:
-                    raise
-                import time; time.sleep(10 * (attempt + 1))
-        choice = completion.choices[0]
-        raw = completion.model_dump()["choices"][0]
-        text = (
-            (choice.message.content if choice.message else None)
-            or (raw.get("delta") or {}).get("content")
-            or ""
-        )
-        text = re.sub(r"^```(?:json)?\s*", "", text.strip(), flags=re.IGNORECASE)
-        text = re.sub(r"\s*```$", "", text.strip())
-        try:
-            data = json.loads(text)
-            return response_format.model_validate(data), usage
-        except Exception:
-            return None, usage
-
-
-class GeminiModelClient(ModelClient):
-    """Wraps the Google GenAI SDK (Vertex AI) with JSON-schema constrained output."""
-
-    def __init__(self, model_name: str = "gemini-2.5-flash"):
-        if not _GENAI_AVAILABLE:
-            raise ImportError("google-genai package is required for Gemini models")
-        super().__init__(model_name)
-        gcp_project = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
-        self.client = _genai.Client(
-            vertexai=True,
-            project=gcp_project,
-            location="global",
-        )
-
-    async def generate(
-        self, prompt: str, response_format: Type[BaseModel]
-    ) -> Tuple[Optional[BaseModel], CallUsage]:
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, self._sync_generate, prompt, response_format
-        )
-
-    def _sync_generate(
-        self, prompt: str, response_format: Type[BaseModel]
-    ) -> Tuple[Optional[BaseModel], CallUsage]:
-        usage = CallUsage()
-        try:
-            # Use thinking budget only for models that don't support it natively
-            config_kwargs = dict(
-                response_mime_type="application/json",
-                response_schema=response_format,
-            )
-            if "none" in self.model_name:
-                config_kwargs["thinking_config"] = _genai_types.ThinkingConfig(
-                    thinking_budget=1024
-                )
-            else:
-                config_kwargs["temperature"] = 0.0
-
-            response = self.client.models.generate_content(
-                model=self.model_name,
-                contents=prompt,
-                config=_genai_types.GenerateContentConfig(**config_kwargs),
-            )
-
-            if response.usage_metadata:
-                usage.input_tokens = response.usage_metadata.prompt_token_count or 0
-                usage.output_tokens = response.usage_metadata.candidates_token_count or 0
-
-            parsed = json.loads(response.text)
-            return response_format.model_validate(parsed), usage
-
-        except Exception:
-            traceback.print_exc()
-            return None, usage
-
-
-def create_model_client(model_name: str) -> ModelClient:
-    """Factory: route to the right backend based on model name prefix."""
-    if model_name.startswith("gemini"):
-        return GeminiModelClient(model_name)
-    # Default: OpenAI-compatible (GPT, o-series, etc.)
-    return OpenAIModelClient(model_name)
-
-
-# ---------------------------------------------------------------------------
-# Agent classes
-# ---------------------------------------------------------------------------
-
 class MetaAgent:
     """Parses raw problem text into structured parameters."""
 
@@ -382,7 +153,6 @@ class MetaAgent:
         prompt = self._template.replace("{problem_text}", problem_text)
         return await self.model.generate(prompt, ProblemMetaResponse)
 
-
 class ExtractAgent:
     """Generic information retrieval: extract(context, query) → (result, usage)."""
 
@@ -395,7 +165,6 @@ class ExtractAgent:
     ) -> Tuple[Optional[ExtractResponse], CallUsage]:
         prompt = self._template.replace("{context}", context).replace("{query}", query)
         return await self.model.generate(prompt, ExtractResponse)
-
 
 class CalculateAgent:
     """Generic numerical computation: calculate(data, query) → (result, usage)."""

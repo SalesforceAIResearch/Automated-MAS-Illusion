@@ -1,7 +1,7 @@
 """
-Smfr price problem generation task.
+Stock price problem generation task.
 
-This task generates problems based on historical smfr prices where entities
+This task generates problems based on historical stock prices where entities
 (investors) perform buy/sell transactions and we calculate totals or comparisons.
 """
 
@@ -9,14 +9,14 @@ import random
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from task_base import BaseTask, BaseDataSource
-from data_sources import SmfrDataSource
+from data_sources import StockDataSource
 
 
-class SMFRTask(BaseTask):
+class StockTask(BaseTask):
     """
-    Task for generating smfr price calculation problems.
+    Task for generating stock price calculation problems.
 
-    Generates haystack of historical smfr data and needles of investor
+    Generates haystack of historical stock data and needles of investor
     transactions, then computes portfolio values.
     """
 
@@ -28,9 +28,9 @@ class SMFRTask(BaseTask):
                     'Oliver', 'Patricia', 'Quinn', 'Rachel', 'Samuel', 'Teresa']
 
     def __init__(self, config: Dict[str, Any], data_sources: Optional[List[BaseDataSource]] = None):
-        """Initialize smfr task with config and data sources."""
+        """Initialize stock task with config and data sources."""
         if data_sources is None:
-            data_sources = [SmfrDataSource()]
+            data_sources = [StockDataSource()]
         super().__init__(config, data_sources)
 
         # Extract task-specific parameters
@@ -62,22 +62,22 @@ class SMFRTask(BaseTask):
 
     def generate_haystack(self, seed: int) -> Dict[str, Any]:
         """
-        Generate haystack of historical smfr price data.
+        Generate haystack of historical stock price data.
 
         Args:
             seed: Random seed for reproducibility
 
         Returns:
-            Dictionary containing smfr data and metadata
+            Dictionary containing stock data and metadata
         """
         random.seed(seed)
 
-        # Select random smfr for the actual problem
+        # Select random stocks for the actual problem
         indices = random.sample(range(len(self.ticker_list)), k=self.breadth)
         selected_tickers = [self.ticker_list[i] for i in indices]
         selected_companies = [self.company_list[i] for i in indices]
 
-        # Select distractor smfr (not used in the problem)
+        # Select distractor stocks (not used in the problem)
         distractor_indices = []
         distractor_tickers = []
         distractor_companies = []
@@ -93,10 +93,10 @@ class SMFRTask(BaseTask):
                 distractor_tickers = [self.ticker_list[i] for i in distractor_indices]
                 distractor_companies = [self.company_list[i] for i in distractor_indices]
 
-        # Fetch smfr data for both selected and distractor smfr
+        # Fetch stock data for both selected and distractor stocks
         all_tickers = selected_tickers + distractor_tickers
-        smfr_source = self.data_sources[0]
-        smfr_data = smfr_source.fetch({
+        stock_source = self.data_sources[0]
+        stock_data = stock_source.fetch({
             'tickers': all_tickers,
             'days_back': 30
         })
@@ -114,9 +114,9 @@ class SMFRTask(BaseTask):
         # Format haystack text with interleaved companies
         haystack_text = ""
         for ticker, company, is_selected in all_companies_with_tickers:
-            haystack_text += f"{company} Historical Smfr Price Data\n"
+            haystack_text += f"{company} Historical Stock Price Data\n"
 
-            records = smfr_data['data'][ticker]['records']
+            records = stock_data['data'][ticker]['records']
             for record in records:
                 row_parts = []
                 for key, value in record.items():
@@ -127,7 +127,7 @@ class SMFRTask(BaseTask):
 
         return {
             'text': haystack_text,
-            'smfr_data': smfr_data,
+            'stock_data': stock_data,
             'selected_tickers': selected_tickers,
             'selected_companies': selected_companies,
             'distractor_tickers': distractor_tickers,
@@ -142,8 +142,8 @@ class SMFRTask(BaseTask):
         Generate investor transaction needles.
 
         For portfolio-level reverse questions:
-        - Generates completed buy-sell pairs across multiple smfr
-        - Adds one incomplete transaction for a common smfr
+        - Generates completed buy-sell pairs across multiple stocks
+        - Adds one incomplete transaction for a common stock
         - reverse_target_sell: buy-only transaction (ask when to sell)
         - reverse_target_buy: sell-only transaction (ask when to buy)
 
@@ -159,7 +159,7 @@ class SMFRTask(BaseTask):
 
         selected_tickers = haystack['selected_tickers']
         selected_companies = haystack['selected_companies']
-        smfr_data = haystack['smfr_data']
+        stock_data = haystack['stock_data']
 
         # Select investors
         investors = random.sample(self.investor_list, k=count)
@@ -170,8 +170,8 @@ class SMFRTask(BaseTask):
             and len(selected_tickers) > 1
         )
 
-        # For portfolio-level reverse questions, select a common smfr
-        common_smfr_idx = 0 if is_portfolio_reverse else None
+        # For portfolio-level reverse questions, select a common stock
+        common_stock_idx = 0 if is_portfolio_reverse else None
 
         needles = []
 
@@ -180,7 +180,7 @@ class SMFRTask(BaseTask):
                 'investor': investor,
                 'transactions': [],
                 'completed_transactions': [],  # Completed buy-sell pairs
-                'incomplete_position': None,   # The common smfr position (buy or sell only)
+                'incomplete_position': None,   # The common stock position (buy or sell only)
                 'portfolio_value': 0,
                 'portfolio_cost': 0,           # Total cost of completed transactions
                 'portfolio_revenue': 0,        # Total revenue from completed transactions
@@ -191,11 +191,11 @@ class SMFRTask(BaseTask):
 
             if is_portfolio_reverse:
                 # Portfolio-level reverse question mode
-                for smfr_idx, (ticker, company) in enumerate(zip(selected_tickers, selected_companies)):
-                    records = smfr_data['data'][ticker]['records']
+                for stock_idx, (ticker, company) in enumerate(zip(selected_tickers, selected_companies)):
+                    records = stock_data['data'][ticker]['records']
 
-                    if smfr_idx == common_smfr_idx:
-                        # This is the common smfr - generate incomplete transaction
+                    if stock_idx == common_stock_idx:
+                        # This is the common stock - generate incomplete transaction
                         # Smart date selection to reduce None occurrences
                         if self.question_type == 'reverse_target_sell':
                             # Buy early in the date range (more future dates available to sell)
@@ -242,7 +242,7 @@ class SMFRTask(BaseTask):
                         investor_data['transactions'].append(incomplete_transaction)
 
                     else:
-                        # For other smfr, generate completed buy-sell pairs
+                        # For other stocks, generate completed buy-sell pairs
                         num_pairs = self.depth // 2
                         rows = random.sample(range(len(records)), k=num_pairs * 2)
                         rows.sort()
@@ -328,7 +328,7 @@ class SMFRTask(BaseTask):
             else:
                 # Original behavior for spending, profit_loss, and simple reverse questions
                 for ticker, company in zip(selected_tickers, selected_companies):
-                    records = smfr_data['data'][ticker]['records']
+                    records = stock_data['data'][ticker]['records']
                     rows = random.sample(range(len(records)), k=self.depth)
                     rows.sort()
 
@@ -397,13 +397,13 @@ class SMFRTask(BaseTask):
         """
         pairs = []
 
-        # Group transactions by smfr ticker
+        # Group transactions by stock ticker
         from collections import defaultdict
         by_ticker = defaultdict(list)
         for txn in transactions:
             by_ticker[txn['ticker']].append(txn)
 
-        # For each smfr, pair buy-sell transactions
+        # For each stock, pair buy-sell transactions
         for ticker, txn_list in by_ticker.items():
             # Transactions should alternate buy-sell
             for i in range(0, len(txn_list) - 1, 2):
@@ -457,7 +457,7 @@ class SMFRTask(BaseTask):
         Find all dates where the target profit/loss could be achieved.
 
         Args:
-            haystack: Haystack data with smfr records
+            haystack: Haystack data with stock records
             pair: A transaction pair with buy/sell info
             target_type: 'sell' (find sell dates given buy) or 'buy' (find buy dates given sell)
 
@@ -465,8 +465,8 @@ class SMFRTask(BaseTask):
             List of valid dates as formatted strings
         """
         ticker = pair['ticker']
-        smfr_data = haystack['smfr_data']
-        records = smfr_data['data'][ticker]['records']
+        stock_data = haystack['stock_data']
+        records = stock_data['data'][ticker]['records']
 
         valid_dates = []
 
@@ -548,9 +548,9 @@ class SMFRTask(BaseTask):
         - Find dates where that profit can be achieved
 
         Args:
-            haystack: Haystack data with smfr records
+            haystack: Haystack data with stock records
             needle: Investor's complete portfolio data
-            target_type: 'sell' (find sell dates for held smfr) or 'buy' (find buy dates)
+            target_type: 'sell' (find sell dates for held stock) or 'buy' (find buy dates)
 
         Returns:
             List of valid dates as formatted strings
@@ -560,19 +560,19 @@ class SMFRTask(BaseTask):
             return []
 
         ticker = incomplete['ticker']
-        smfr_data = haystack['smfr_data']
-        records = smfr_data['data'][ticker]['records']
+        stock_data = haystack['stock_data']
+        records = stock_data['data'][ticker]['records']
         shares = incomplete['number']
 
         # Calculate total portfolio cost
         # For reverse_target_sell: cost = completed cost + incomplete buy cost
         # For reverse_target_buy: cost = completed cost - incomplete sell revenue (we didn't buy yet)
         if target_type == 'sell':
-            # We already bought the common smfr, now finding when to sell
+            # We already bought the common stock, now finding when to sell
             incomplete_cost = incomplete['value']
             total_cost = needle['portfolio_cost'] + incomplete_cost
         else:  # target_type == 'buy'
-            # We already sold the common smfr, now finding when we could have bought
+            # We already sold the common stock, now finding when we could have bought
             incomplete_revenue = incomplete['value']
             # Cost is what we paid for everything else; we'll add buy cost
             total_cost = needle['portfolio_cost']
@@ -697,8 +697,8 @@ class SMFRTask(BaseTask):
             Answer depends on question_type:
             - 'spending': Total amount spent (float)
             - 'profit_loss': Total profit/loss (float)
-            - 'reverse_target_sell': List of valid sell dates (portfolio or single-smfr)
-            - 'reverse_target_buy': List of valid buy dates (portfolio or single-smfr)
+            - 'reverse_target_sell': List of valid sell dates (portfolio or single-stock)
+            - 'reverse_target_buy': List of valid buy dates (portfolio or single-stock)
         """
         if self.question_type == 'spending':
             # Original behavior: return total spending
@@ -713,16 +713,16 @@ class SMFRTask(BaseTask):
             return total_profit_loss
 
         elif self.question_type == 'reverse_target_sell':
-            # Check if this is portfolio-level or single-smfr
+            # Check if this is portfolio-level or single-stock
             if needle.get('incomplete_position') is not None:
-                # Portfolio-level: find dates to sell common smfr to achieve portfolio target
+                # Portfolio-level: find dates to sell common stock to achieve portfolio target
                 valid_dates = self._find_valid_dates_portfolio_level(
                     needle.get('haystack_ref'),
                     needle,
                     'sell'
                 )
             else:
-                # Single-smfr (legacy): find dates across all pairs
+                # Single-stock (legacy): find dates across all pairs
                 pairs = self._create_transaction_pairs(needle['transactions'])
                 needle['transaction_pairs'] = pairs
 
@@ -743,16 +743,16 @@ class SMFRTask(BaseTask):
             return unique_dates
 
         elif self.question_type == 'reverse_target_buy':
-            # Check if this is portfolio-level or single-smfr
+            # Check if this is portfolio-level or single-stock
             if needle.get('incomplete_position') is not None:
-                # Portfolio-level: find dates to buy common smfr to achieve portfolio target
+                # Portfolio-level: find dates to buy common stock to achieve portfolio target
                 valid_dates = self._find_valid_dates_portfolio_level(
                     needle.get('haystack_ref'),
                     needle,
                     'buy'
                 )
             else:
-                # Single-smfr (legacy): find dates across all pairs
+                # Single-stock (legacy): find dates across all pairs
                 pairs = self._create_transaction_pairs(needle['transactions'])
                 needle['transaction_pairs'] = pairs
 
@@ -836,18 +836,18 @@ class SMFRTask(BaseTask):
                 action_clauses = []
                 for action in sorted(action_groups.keys()):
                     txns = action_groups[action]
-                    # Build smfr list for this action
-                    smfr_parts = [f"{txn['number']} shares of {txn['company']}" for txn in txns]
+                    # Build stock list for this action
+                    stock_parts = [f"{txn['number']} shares of {txn['company']}" for txn in txns]
 
-                    # Join smfr with commas and 'and'
-                    if len(smfr_parts) == 1:
-                        smfr_str = smfr_parts[0]
-                    elif len(smfr_parts) == 2:
-                        smfr_str = f"{smfr_parts[0]} and {smfr_parts[1]}"
+                    # Join stocks with commas and 'and'
+                    if len(stock_parts) == 1:
+                        stocks_str = stock_parts[0]
+                    elif len(stock_parts) == 2:
+                        stocks_str = f"{stock_parts[0]} and {stock_parts[1]}"
                     else:
-                        smfr_str = ', '.join(smfr_parts[:-1]) + f", and {smfr_parts[-1]}"
+                        stocks_str = ', '.join(stock_parts[:-1]) + f", and {stock_parts[-1]}"
 
-                    action_clauses.append(f"{action} {smfr_str}")
+                    action_clauses.append(f"{action} {stocks_str}")
 
                 # Join all actions for this investor
                 if len(action_clauses) == 1:
@@ -999,4 +999,4 @@ class SMFRTask(BaseTask):
 
     def get_task_type(self) -> str:
         """Return task type identifier."""
-        return "smfr"
+        return "stock"

@@ -2,7 +2,7 @@
 Time-varying data sources for problem generation.
 
 This module implements concrete data sources that fetch external data
-which changes over time (smfr, currencies, weather). Each data source
+which changes over time (stocks, currencies, weather). Each data source
 supports fetching, serialization, and updating with latest values.
 """
 
@@ -14,20 +14,20 @@ from typing import Dict, Any, List, Optional
 from task_base import BaseDataSource
 
 
-class SmfrDataSource(BaseDataSource):
+class StockDataSource(BaseDataSource):
     """
-    Data source for historical smfr prices using yfinance.
+    Data source for historical stock prices using yfinance.
 
-    Supports fetching smfr data, serializing it for storage, and updating
+    Supports fetching stock data, serializing it for storage, and updating
     it with the latest prices while preserving the original structure.
     """
 
     def __init__(self):
-        self.source_type = "smfr"
+        self.source_type = "stock"
 
     def fetch(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Fetch smfr price data for specified tickers and date range.
+        Fetch stock price data for specified tickers and date range.
 
         Args:
             params: Must contain:
@@ -36,7 +36,7 @@ class SmfrDataSource(BaseDataSource):
                 - end_date: Optional end date (defaults to now)
 
         Returns:
-            Dictionary with smfr data, metadata for updates
+            Dictionary with stock data, metadata for updates
         """
         tickers = params['tickers']
         days_back = params.get('days_back', 30)
@@ -49,7 +49,7 @@ class SmfrDataSource(BaseDataSource):
         formatted_end = end_date.strftime("%Y-%m-%d")
         formatted_start = start_date.strftime("%Y-%m-%d")
 
-        smfr_data = {}
+        stock_data = {}
         for ticker in tickers:
             data = yf.Ticker(ticker)
             hist_data = data.history(start=formatted_start, end=formatted_end)
@@ -58,7 +58,7 @@ class SmfrDataSource(BaseDataSource):
             # Convert to list of records for easier manipulation
             records = json.loads(hist_data.to_json(orient="records", date_format="iso"))
 
-            smfr_data[ticker] = {
+            stock_data[ticker] = {
                 'records': records,
                 'ticker': ticker,
                 'start_date': formatted_start,
@@ -68,7 +68,7 @@ class SmfrDataSource(BaseDataSource):
 
         return {
             'source_type': self.source_type,
-            'data': smfr_data,
+            'data': stock_data,
             'params': params,
             'metadata': {
                 'days_back': days_back,
@@ -79,7 +79,7 @@ class SmfrDataSource(BaseDataSource):
 
     def serialize(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Serialize smfr data for storage and later updates.
+        Serialize stock data for storage and later updates.
 
         Args:
             data: Data from fetch()
@@ -92,13 +92,13 @@ class SmfrDataSource(BaseDataSource):
 
     def update(self, serialized_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Update smfr data with latest prices, preserving structure.
+        Update stock data with latest prices, preserving structure.
 
         The update maintains the same number of data points and relative
         date offsets, but uses current dates and prices.
 
         Args:
-            serialized_data: Previously fetched and serialized smfr data
+            serialized_data: Previously fetched and serialized stock data
 
         Returns:
             Updated data with new prices and dates
@@ -210,7 +210,7 @@ def create_data_source(source_type: str) -> BaseDataSource:
     Factory function to create data sources by type.
 
     Args:
-        source_type: Type identifier ('smfr', 'currency', 'weather')
+        source_type: Type identifier ('stock', 'currency', 'weather')
 
     Returns:
         Instance of the appropriate data source
@@ -219,7 +219,7 @@ def create_data_source(source_type: str) -> BaseDataSource:
         ValueError: If source_type is not recognized
     """
     sources = {
-        'smfr': SmfrDataSource,
+        'stock': StockDataSource,
         'currency': CurrencyDataSource,
         'weather': WeatherDataSource
     }

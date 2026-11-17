@@ -1,319 +1,148 @@
 # The Illusion of Automatically Orchestrated Multi-Agent Advantage
 
-This repository contains (1) the code for generating and evaluating the **Smfrs** benchmark dataset used in our experiments, and (2) the evaluation code for all methods compared in the paper, including automatic MAS frameworks, our expert-designed MAS, and single-agent baselines (CoT & CoT-SC).
+This repository releases our **Synthetic Multi-Hop Financial Reasoning (SMFR)**
+benchmark, standalone CoT/CoT-SC and Code-CoT/Code-CoT-SC baselines, and
+**Simple-MAS** and **Expert-MAS** reference systems.
+
+It contains our dataset generation, prompts, pipelines, evaluation, and result
+summaries. Automated MAS framework implementations, trained controllers,
+generated framework architectures, and third-party benchmark datasets are not
+bundled. Obtain those implementations and datasets from their original authors.
+
+## Install and verify
+
+```bash
+git clone https://github.com/SalesforceAIResearch/Automated-MAS-Illusion.git
+cd Automated-MAS-Illusion
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+python -m scripts.verify_release
+python -m unittest discover -s tests -v
+```
+
+Python 3.10+ is required; the release is checked on Python 3.12. Install
+`pip install -e '.[vertex]'` for Gemini on Vertex, or
+`pip install -e '.[generation]'` to generate new synthetic problems.
+[requirements-validated.txt](requirements-validated.txt) records the local
+dependency versions used for the offline checks.
+
+The release includes ordinary gzip files, **not Git LFS pointers**. Loaders read
+compressed JSONL directly. No model requests are made by verification or tests.
 
 ## Contents
 
-- Repository Structure
-- Dataset Generation & Evaluation
-  - Generate the Dataset
-  - Evaluate Model Outputs
-- Running Experiments
-  - CoT & CoT-SC (Single-Agent Baselines)
-  - Expert-Designed MAS (Smfrs)
-  - Automatic MAS Frameworks
-    - ADAS
-    - AFlow
-    - DyLAN
-    - MaAS
-    - MAS-Orchestra
-    - MAS-Zero
+| Path | Contents |
+|---|---|
+| [`dataset/data/`](dataset/README.md) | Exact v2 test set and held-out validation split |
+| [`dataset/src/`](dataset/src) | Our synthetic task generator and financial-data source adapters |
+| [`dataset/evaluate/scoring.py`](dataset/evaluate/scoring.py) | Canonical final-answer evaluator |
+| [`evaluation/SAS/SMFR/`](evaluation/SAS/SMFR/README.md) | Standalone baselines and versioned prompt presets |
+| [`evaluation/simple_MAS_for_smfr_dataset/`](evaluation/simple_MAS_for_smfr_dataset/README.md) | Context-separation anchor: meta → retrieval → calculation |
+| [`evaluation/expert_MAS_for_smfr_dataset/`](evaluation/expert_MAS_for_smfr_dataset/README.md) | Investor-specific decomposition and deterministic orchestration |
+| [`evaluation/SAS/prompts/`](evaluation/SAS/prompts) | Archived task-specific baseline prompt text for other evaluated benchmarks |
+| [`results/`](results/README.md) | Aggregate results and paired correctness snapshots |
+| [`docs/protocols.md`](docs/protocols.md) | Historical/new protocol distinctions and accounting limitations |
 
----
+## Dataset
 
-## Repository Structure
+Use the released `fixed_v2` files for the paper's canonical **588-problem test
+set**. Investor counts 2–6 contain 96, 96, 104, 152, and 140 problems. The
+**16 validation problems are separate and disjoint**; do not add them to the
+test denominator. [Checksums and counts](dataset/MANIFEST.json) pin both splits.
 
-```
-.
-├── dataset/
-│   ├── src/                          # Dataset generation code
-│   │   ├── generate_balanced_dataset.py
-│   │   ├── config_schema.py
-│   │   ├── problem_composer.py
-│   │   ├── task_base.py
-│   │   ├── data_sources.py
-│   │   └── tasks/
-│   └── evaluate/                     # Smfrs evaluation script
-│       ├── evaluate_smfr_answer_code.py
-│       ├── safe_code_executor.py
-│       └── requirements_evaluation.txt
-│
-└── evaluation/
-    ├── SAS/                          # CoT & CoT-SC single-agent baselines
-    │   ├── GPQA/
-    │   ├── HLEMATH/
-    │   ├── BCP/
-    │   ├── SMFR/
-    │   └── SWE/
-    ├── expert_MAS_for_smfr_dataset/ # Expert-designed MAS for Smfrs
-    │   ├── agents.py
-    │   ├── pipeline.py
-    │   ├── run_inference.py
-    │   ├── debug_trace.py
-    │   └── prompts/
-    └── Automatic-MAS/                # Automatic MAS frameworks
-        ├── ADAS/
-        ├── AFlow/
-        ├── DyLAN/
-        ├── MaAS/
-        ├── MAS-Orchestra/
-        └── MAS-Zero/
+```python
+from evaluation.common.data import dataset
+for investors, sample in dataset():
+    problem, gold = sample["problem"], sample["answer"]
 ```
 
----
+Increasing investor count also changes context size, transaction count, and
+other generation parameters; it is not an isolated intervention on one factor.
+See the [data card](dataset/README.md) for provenance and generation limits.
 
-## Dataset Generation & Evaluation
+## Configure a provider
 
-### Generate the Dataset
+Copy `.env.example` to `.env`. Public runners support OpenAI-compatible APIs,
+Together, OpenRouter, and native Vertex AI. All credentials and outputs stay
+local and are ignored by Git.
+
+For Vertex, set `GOOGLE_CLOUD_PROJECT` and authenticate Application Default
+Credentials with `gcloud auth application-default login`. No organization
+project or internal gateway is hardcoded in this release.
+
+## Run the baselines
+
+Validate configuration without making requests:
 
 ```bash
-cd dataset/src
-
-# Install dependencies
-pip install yfinance python-dateutil tqdm
-
-# Generate with 2 investors per problem
-python generate_balanced_dataset.py 2
-
-# Generate with 3 investors per problem
-python generate_balanced_dataset.py 3
+python -m evaluation.SAS.SMFR.run_baseline \
+  --protocol gemini_cot --provider vertex --model gemini-2.5-pro \
+  --k 3 --limit 2 --output outputs/cot_sc_dry --dry-run
 ```
 
-The complexity parameter `N` controls the number of investors, companies (breadth), transactions per investor (depth), and distractors simultaneously.
-
-### Evaluate Model Outputs
+Run one Gemini CoT-SC repetition:
 
 ```bash
-cd dataset/evaluate
-
-pip install -r requirements_evaluation.txt
-
-# Basic evaluation
-python evaluate_smfr_answer_code.py \
-    --reference  <path_to>/balanced_dataset_single_2_fixed.jsonl \
-    --model-output  your_model_outputs.jsonl
-
-# With validation exclusion (required for n=2 and n=3)
-python evaluate_smfr_answer_code.py \
-    --reference  <path_to>/balanced_dataset_single_2_fixed.jsonl \
-    --model-output  your_model_outputs.jsonl \
-    --validation  <path_to>/balanced_dataset_single_validate_fixed.jsonl \
-    --timeout 30
+python -m evaluation.SAS.SMFR.run_baseline \
+  --protocol gemini_cot --provider vertex --model gemini-2.5-pro \
+  --k 3 --workers 8 --output outputs/gemini_cot_sc_run0
 ```
 
-Model output files should be JSONL with one record per line:
+For Code-CoT-SC, use `--protocol gemini_code_cot --execute-code`. For CoT or
+Code-CoT, set `--k 1`. Model-answer voting and executed-code voting are reported
+separately. Code execution uses an independent timeout worker with a standard
+library allowlist; it is **not an OS security sandbox**. Run model programs in
+an isolated environment without credentials. The public worker's import policy
+differs from some historical executors; do not silently mix re-executed scores.
 
-```json
-{
-  "input":  {"problem": "Here is some data on the smfr prices ..."},
-  "output": {"answer": "Alice", "code": "def solve(): ..."}
-}
-```
+Historical GPT-OSS CoT-SC requested code as well as an answer. The
+`gptoss_historical` preset preserves that prompt and direct-voting policy. The
+`controlled_*` presets are separate experiments; they do not replace the
+historical comparison against automated frameworks. Read [protocols.md](docs/protocols.md).
 
-The `code` field is optional. If present it must define a `solve()` function returning `{"answer": ...}`.
-
----
-
-## Running Experiments
-
-### CoT & CoT-SC (Single-Agent Baselines)
-
-Each subdirectory under `evaluation/SAS/` is self-contained. `<data_dir>` should point to the folder containing the `.jsonl` benchmark files.
+## Run Simple-MAS or Expert-MAS
 
 ```bash
-export OPENAI_API_KEY="your-api-key"
-export MAX_CONCURRENT=50
+python -m evaluation.run_mas \
+  --system simple --provider vertex --model gemini-2.5-pro \
+  --workers 4 --output outputs/gemini_simple_run0
 
-# ── GPQA ──────────────────────────────────────────────────────────────────
-cd evaluation/SAS/GPQA
-pip install -r ../requirements.txt
-
-# CoT — run ID 1 (repeat with 2, 3 for 3 runs)
-python cot_gpqa.py <data_dir>/gpqa_test.jsonl gpqa_test gpt-4o gpqa_downsampled_gpt-4o "['Assistant']" 1
-
-# CoT-SC — ensemble size 5
-python cot_sc_gpqa.py <data_dir>/gpqa_test.jsonl gpqa_test gpt-4o gpqa_downsampled_gpt-4o "['Assistant']" 1 5
-
-# ── HLE-Math ──────────────────────────────────────────────────────────────
-cd evaluation/SAS/HLEMATH
-
-python cot_hlemath.py <data_dir>/hlemath_test.jsonl hlemath_test gpt-4o hlemath_downsampled_gpt-4o "['Assistant']" 1
-python cot_sc_hlemath.py <data_dir>/hlemath_test.jsonl hlemath_test gpt-4o hlemath_downsampled_gpt-4o "['Assistant']" 1 5
-
-# ── BrowseComp+ ───────────────────────────────────────────────────────────
-cd evaluation/SAS/BCP
-
-python cot_bcp.py <data_dir>/bcp_test.jsonl bcp_test gpt-4o bcp_downsampled_gpt-4o "['Assistant']" 1
-python cot_sc_bcp.py <data_dir>/bcp_test.jsonl bcp_test gpt-4o bcp_downsampled_gpt-4o "['Assistant']" 1 5
-
-# ── Smfrs ────────────────────────────────────────────────────────────────
-cd evaluation/SAS/SMFR
-
-# CODE_EVAL_MODE: 1 = require code output, 0 = direct answer only
-python cot_smfrs.py <data_dir>/smfr_test.jsonl smfr_test gpt-4o smfr_gpt-4o "['Assistant']" 1 1
-python cot_sc_smfr.py <data_dir>/smfr_test.jsonl smfr_test gpt-4o smfr_gpt-4o "['Assistant']" 1 1 5
-
-# ── SWE-Bench ─────────────────────────────────────────────────────────────
-cd evaluation/SAS/SWE
-
-# JUDGE_PATH enables Docker-based evaluation (optional)
-python cot_swe.py <data_dir>/swe_test.jsonl swe_test gpt-4o swe_downsampled_gpt-4o "['Assistant']" 1 <judge_path> princeton-nlp/SWE-bench_Lite
-python cot_sc_swe.py <data_dir>/swe_test.jsonl swe_test gpt-4o swe_downsampled_gpt-4o "['Assistant']" 1 <judge_path> princeton-nlp/SWE-bench_Lite 5
+python -m evaluation.run_mas \
+  --system expert --provider together --model openai/gpt-oss-120b \
+  --workers 4 --max-calls 16 --output outputs/gptoss_expert_run0
 ```
 
-Replace `gpt-4o` with `gpt-5` to switch models. The last numeric argument to `cot_sc_*.py` sets the ensemble size.
+Use `--limit 2` for a small run or `--dry-run` for an offline configuration
+check. Each invocation runs **one repetition**. Choose a new output directory
+and `--run-id` for another repetition. Reusing the same directory resumes
+checkpointed responses and verifies that the configuration has not changed.
+Create an `outputs/.../STOP` file to stop scheduling new work; active requests
+finish. Transient API failures get at most six attempts; malformed successful
+responses are retained, never resampled to obtain a valid answer.
 
----
+Every call stores its request, raw response, usage, timing, and dependency
+metadata. Vertex accounting includes thinking tokens. Supply `--input-rate`
+and `--output-rate` in USD per million tokens to compute a cost estimate when
+the provider does not report cost; otherwise cost is explicitly unavailable.
+Pipeline `stats.cost_usd` retains historical rate-card estimates for provenance;
+the run summary uses the provider ledger, not that legacy estimate. Neither is
+an invoice. Failed requests with unknown billing remain in attempt records.
 
-### Expert-Designed MAS (Smfrs)
-
-A manually designed 5-phase multi-agent pipeline (MetaAgent → ExtractAgent → CalculateAgent → ExtractAgent → Python aggregation) for the Smfrs benchmark.
+## Evaluate saved outputs
 
 ```bash
-cd evaluation/expert_MAS_for_smfr_dataset
-pip install -r requirements.txt
-
-export OPENAI_API_KEY="your-api-key"
-
-# Quick test (2 samples)
-python run_inference.py --input <data_dir>/smfr_test.jsonl --model gpt-4.1 --test
-
-# Full run — 10 parallel pipelines, 3 repetitions
-python run_inference.py \
-    --input <data_dir>/smfr_test.jsonl \
-    --model gpt-4.1 \
-    --concurrency 10 \
-    --reps 3
+python -m scripts.evaluate --outputs outputs/gemini_simple_run0/outputs.jsonl
 ```
 
-Supported model aliases: `gpt-4o`, `gpt-4.1`, `o3`, `o4-mini`, `gpt-5`, `gemini-flash`, `gemini-pro`. For Gemini models also set `GOOGLE_CLOUD_PROJECT` and run `gcloud auth application-default login`.
+Predictions are joined to canonical references by stripped-problem SHA-256.
+Missing outputs count incorrect; false ties are penalized; explicit no-winner
+answers are distinguished from missing/malformed answers.
 
----
+## License and attribution
 
-### Automatic MAS Frameworks
-
-Each framework has its own `README.md` with full details. Below are the essential commands to reproduce our experiments.
-
-Place benchmark datasets (`.jsonl` files) in each framework's expected data directory before running. Refer to the individual READMEs for the exact path.
-
-#### ADAS
-
-```bash
-cd evaluation/Automatic-MAS/ADAS
-pip install -r requirements.txt
-export OPENAI_API_KEY="your-api-key"
-
-bash run_gpqa.sh
-bash run_hle.sh
-bash run_bcp.sh
-bash run_smfr.sh
-bash run_swe.sh
-```
-
-#### AFlow
-
-```bash
-cd evaluation/Automatic-MAS/AFlow
-pip install -r requirements.txt
-
-# Set API key in config/config2.yaml
-# models: { "gpt-4o": { api_key: "your-api-key", ... } }
-
-bash run_gpqa.sh
-bash run_hlemath.sh
-bash run_bcp.sh
-bash run_smfr.sh
-bash run_swe.sh
-```
-
-#### DyLAN
-
-```bash
-cd evaluation/Automatic-MAS/DyLAN/code
-pip install -r requirements.txt
-export OPENAI_API_KEY="your-api-key"
-
-# GPQA
-cd GPQA
-python llmlp_listwise_gpqa.py <data_dir>/gpqa_test.jsonl gpqa_test gpt-4o results "['Theoretical Physicist', 'Molecular Chemist', 'Cellular Biologist', 'Assistant']"
-
-# HLE-Math
-cd ../HLEMATH
-python llmlp_listwise_hlemath.py <data_dir>/hlemath_test.jsonl hlemath_test gpt-4o results "['Mathematician', 'AlgebraExpert', 'GeometryWizard', 'Assistant']"
-
-# BrowseComp+
-cd ../BCP
-python llmlp_listwise_bcp.py <data_dir>/bcp_test.jsonl bcp_test gpt-4o results "['Knowledge Researcher', 'Cultural Historian', 'Information Analyst', 'Assistant']"
-
-# Smfrs
-cd ../SMFR
-bash exp_smfr_gpt4o.sh
-
-# SWE-Bench
-cd ../SWE
-bash exp_swe_gpt4o.sh
-```
-
-#### MaAS
-
-```bash
-cd evaluation/Automatic-MAS/MaAS
-pip install -e .
-
-# Configure ~/.metagpt/config2.yaml with your API key
-
-# Train (search)
-python -m examples.maas.optimize --dataset GPQA --round 1 --sample 4
-
-# Test
-python -m examples.maas.optimize --dataset GPQA --round 1 --sample 4 --is_test True
-
-# Smfrs (3-run evaluation)
-bash run_smfr_test_3x.sh
-```
-
-#### MAS-Orchestra
-
-```bash
-cd evaluation/Automatic-MAS/MAS-Orchestra
-pip install -r requirements.txt
-export OPENAI_API_KEY="your-api-key"
-export TOGETHER_API_KEY="your-together-key"   # required for gpt-oss-120b
-
-# Step 1: deploy the orchestrator model
-bash vllm_deploy.sh
-
-# Step 2: generate MAS for each benchmark
-bash generate_mas.sh
-
-# Step 3: run evaluation
-bash run_gpt4o.sh    # gpt-4o sub-agents
-bash run_gpt5.sh     # gpt-5 sub-agents
-bash run_gptoss.sh   # gpt-oss-120b sub-agents
-```
-
-#### MAS-Zero
-
-```bash
-cd evaluation/Automatic-MAS/MAS-Zero
-pip install -r requirements.txt
-export OPENAI_API_KEY="your-api-key"
-
-# Search — design MAS for GPQA
-python main_question.py \
-    --dataset workflow_search/gpqa_diamond \
-    --option plan \
-    --meta_model gpt-4o_chatgpt \
-    --node_model gpt-4o_chatgpt \
-    --verifier_model gpt-4o_chatgpt \
-    --blocks COT COT_SC Reflexion LLM_debate \
-    --n_generation 5
-
-# Verify — select best answer
-python main_judge.py \
-    --dataset gpqa_diamond \
-    --judge_method self \
-    --baseline workflow_search
-```
-
-Refer to `evaluation/Automatic-MAS/MAS-Zero/README.md` for commands covering other benchmarks (HLE-Math, SWE-Bench).
+Our code is distributed under the existing [CC BY-NC 4.0 license](LICENSE.txt). The original SMFR dataset
+metadata declares [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/);
+see [dataset/LICENSE](dataset/LICENSE) and [NOTICE](NOTICE). Financial price
+observations were sourced through Yahoo Finance; new generation may obtain
+different or revised observations. Use the pinned release files for evaluation.
